@@ -118,3 +118,112 @@ En este ejemplo tendremos que generar la estructura de Docker para poder descarg
 - Conexión con PHP.
 
     ![](images/cap5.png)
+
+
+# Estructura para el funcionamiento con el certificado *_HTTPS_*
+
+- La estructura es la misma que la anterior pero modificando una serie de `apartados` que comento más adelante.
+
+    ```
+    version: '3'
+
+    services:
+    wordpress:
+        image: bitnami/wordpress
+        ports:
+        - 8080:8080
+        - 8443:8443
+        environment: 
+        - WORDPRESS_DATABASE_HOST=mysql
+        - WORDPRESS_DATABASE_NAME=${WORDPRESS_DB_NAME}
+        - WORDPRESS_DATABASE_USER=${WORDPRESS_DB_USER}
+        - WORDPRESS_DATABASE_PASSWORD=${WORDPRESS_DB_PASSWORD}
+        - WORDPRESS_DATABASE_PORT_NUMBER=${WORDPRESS_DATABASE_PORT_NUMBER}
+        - ALLOW_EMPTY_PASSWORD=yes
+        volumes: 
+        - wordpress_data:/var/www/html
+        depends_on:
+        - mysql
+        restart: always
+
+    mysql:
+        image: mysql:8.0
+        ports:
+        - "3306:3306"
+        environment:
+        - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+        - MYSQL_DATABASE=${WORDPRESS_DB_NAME}
+        - MYSQL_USER=${WORDPRESS_DB_USER}
+        - MYSQL_PASSWORD=${WORDPRESS_DB_PASSWORD}
+        volumes:
+        - mysql_data:/var/lib/mysql
+        restart: always
+
+    phpmyadmin:
+        image: phpmyadmin
+        ports:
+        - 8081:80
+        environment: 
+        - PMA_ARBITRARY=1
+        restart: always
+
+    https-portal:
+        image: steveltn/https-portal:1
+        ports:
+        - 80:80
+        - 443:443
+        restart: always
+        environment:
+        DOMAINS: 'dominio-iawjoaquin.ddns.net -> http://wordpress:8080'
+        STAGE: 'production' # Don't use production until staging works
+        # FORCE_RENEW: 'true'
+
+    volumes: 
+    mysql_data:
+    wordpress_data:
+
+
+
+    ```
+
+
+# Apartados mas importantes.
+
+- Uno de los errores que nos va a dar es por culpa de mapeo de puertos. *_¿Que es el mapeo de puertos_*? --> El mapeo de puertos es cuando encontramos que en nuestra estructura los puertos se repiten.
+
+- Para poder solucionarlo como primer paso al `servicio de Wordpress` le pondremos los puertos siguientes que son el *8080 y 8443* del contenedor de Wordpress.
+
+- Segun `dockerhub` el contenedor de wordpress de `bitnami`nos pide que el puerto tiene que ser el *8443* por lo tanto lo pondremos.
+
+## Apartado de HTTPS
+
+- Como los puertos 80 y 443 de HTTPS estan libres debido a que hemos cambiado la configuración de nuestro `service`de wordpress podremos añadirlo con la siguiente estructura.
+
+
+    ```
+    https-portal:
+            image: steveltn/https-portal:1
+            ports:
+            - 80:80
+            - 443:443
+            restart: always
+            environment:
+            DOMAINS: 'dominio-iawjoaquin.ddns.net -> http://wordpress:8080'
+            STAGE: 'production' # Don't use production until staging works
+            # FORCE_RENEW: 'true'
+    ```
+
+- Donde hemos añadido nuestro nombre de *dominio* para poder tener una conexión segura.
+
+## Comprobación del funcionamiento.
+
+1. `docker compose ps -a`
+
+    ![](images/cap6.png)
+
+- Aquí podemos ver los puertos nuevos que hemos configurado con su contenedor correspondiente.
+
+
+2. `Pagina de ejemplo de Wordpress`
+
+    ![](images/cap7.png)

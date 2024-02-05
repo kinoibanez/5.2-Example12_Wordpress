@@ -1,0 +1,56 @@
+version: '3'
+
+services:
+  wordpress:
+    image: bitnami/wordpress
+    ports:
+      - 8080:8080
+      - 8443:8443
+    environment: 
+      - WORDPRESS_DATABASE_HOST=mysql
+      - WORDPRESS_DATABASE_NAME=${WORDPRESS_DB_NAME}
+      - WORDPRESS_DATABASE_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DATABASE_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DATABASE_PORT_NUMBER=${WORDPRESS_DATABASE_PORT_NUMBER}
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes: 
+      - wordpress_data:/var/www/html
+    depends_on:
+      - mysql
+    restart: always
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${WORDPRESS_DB_NAME}
+      - MYSQL_USER=${WORDPRESS_DB_USER}
+      - MYSQL_PASSWORD=${WORDPRESS_DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
+
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - 8081:80
+    environment: 
+      - PMA_ARBITRARY=1
+    restart: always
+
+  https-portal:
+    image: steveltn/https-portal:1
+    ports:
+      - 80:80
+      - 443:443
+    restart: always
+    environment:
+      DOMAINS: 'dominio-iawjoaquin.ddns.net -> http://wordpress:8080'
+      STAGE: 'production' # Don't use production until staging works
+    # FORCE_RENEW: 'true'
+
+volumes: 
+  mysql_data:
+  wordpress_data:
