@@ -47,7 +47,7 @@ services:
       - 443:443
     restart: always
     environment:
-      DOMAINS: 'dominio-iawjoaquin.ddns.net -> http://wordpress:8080'
+      DOMAINS: 'dominiodejoaquin.ddns.net-> http://wordpress:8080'
       STAGE: 'production' # Don't use production until staging works
     # FORCE_RENEW: 'true'
 
