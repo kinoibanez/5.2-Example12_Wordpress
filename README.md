@@ -6,9 +6,9 @@ En este ejemplo tendremos que generar la estructura de Docker para poder descarg
 
 - Tendremos que generar un código que nos permita poder instalar wordpress a través de un *_docker_*. Para esto tendremos que hacer uso del siguiente código, pero teniendo en cuenta una serie de `excepciones` bastantes importantes.
 
-    ``` 
+    ```
 
-    version: '3'
+        version: '3'
 
     services:
     wordpress:
@@ -21,29 +21,40 @@ En este ejemplo tendremos que generar la estructura de Docker para poder descarg
             #PERO AQUÍ TENEMOS QUE BUSCAR EXACTAMENTE COMO SE LLAMAN
             # EN ESTE CASO EN BITNAMI/WORDPRESS
         - WORDPRESS_DATABASE_HOST=mysql
-        - WORDPRESS_DATABASE_NAME=${WORDPRESS_DB_NAME}
-        - WORDPRESS_DATABASE_USER=${WORDPRESS_DB_USER}
-        - WORDPRESS_DATABASE_PASSWORD=${WORDPRESS_DB_PASSWORD}
+        - WORDPRESS_DATABASE_NAME=${WORDPRESS_DATABASE_NAME}
+        - WORDPRESS_DATABASE_USER=${WORDPRESS_DATABASE_USER}
+        - WORDPRESS_DATABASE_PASSWORD=${WORDPRESS_DATABASE_PASSWORD}
         - WORDPRESS_DATABASE_PORT_NUMBER=${WORDPRESS_DATABASE_PORT_NUMBER}
+        - WORDPRESS_USERNAME=${WORDPRESS_USERNAME}
+        - WORDPRESS_PASSWORD=${WORDPRESS_PASSWORD}
+        - WORDPRESS_EMAIL=${WORDPRESS_EMAIL}
         - ALLOW_EMPTY_PASSWORD=yes
+        # Cada variables tiene que estar bien identificada, el apartado 1 es el nombre de como tiene que llamarse en bitnami
+        # El apartado después es el que tenemos que identificar con $ y el nombre de nuestra variables en el .env
         volumes: 
-        - wordpress_data:/var/www/html
+        - wordpress_data:/bitnami/wordpress
         depends_on:
         - mysql
         restart: always
+        networks:
+        - frontend
+        - backend
 
     mysql:
         image: mysql:8.0
         ports:
         - 3306:3306
         environment:
+        #Cogemos las variables que hemos declarado en Wordpress, así podemos tener menos variables y las reciclamos.
         - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-        - MYSQL_DATABASE=${WORDPRESS_DB_NAME}
-        - MYSQL_USER=${WORDPRESS_DB_USER}
-        - MYSQL_PASSWORD=${WORDPRESS_DB_PASSWORD}
+        - MYSQL_DATABASE=${WORDPRESS_DATABASE_NAME}
+        - MYSQL_USER=${WORDPRESS_DATABASE_USER}
+        - MYSQL_PASSWORD=${WORDPRESS_DATABASE_PASSWORD}
         volumes:
         - mysql_data:/var/lib/mysql
         restart: always
+        networks:
+        - backend
 
     phpmyadmin:
         image: phpmyadmin
@@ -52,13 +63,19 @@ En este ejemplo tendremos que generar la estructura de Docker para poder descarg
         environment: 
         - PMA_ARBITRARY=1
         restart: always
+        networks:
+        - frontend
+        - backend
 
     volumes: 
     mysql_data:
     wordpress_data:
 
-
+    networks:
+    frontend:
+    backend:
     ```
+
 
 ## Apartados a comentar.
 
