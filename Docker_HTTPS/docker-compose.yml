@@ -50,7 +50,8 @@ services:
     ports:
       - 8080:80
     environment: 
-      - PMA_ARBITRARY=1
+    #Con pma_host indicamos el servicio con el que queremos que se use.
+      - PMA_HOST=mysql
     restart: always
     networks:
       - frontend
