@@ -141,48 +141,65 @@ En este ejemplo tendremos que generar la estructura de Docker para poder descarg
 
 - La estructura es la misma que la anterior pero modificando una serie de `apartados` que comento más adelante.
 
-    ```
+```
     version: '3'
 
     services:
     wordpress:
         image: bitnami/wordpress
-        ports:
-        - 8080:8080
-        - 8443:8443
+        #Buena idea poner el tag para saber la versión por las variables.
         environment: 
+            #IMPORTANTE BUSCAR EXACTAMENTE EL NOMBRE DE CADA UNA. ES DECIR, EN EL .ENV PUEDEN LLAMARSE COMO QUIERAN
+            #PERO AQUÍ TENEMOS QUE BUSCAR EXACTAMENTE COMO SE LLAMAN
+            # EN ESTE CASO EN BITNAMI/WORDPRESS
         - WORDPRESS_DATABASE_HOST=mysql
-        - WORDPRESS_DATABASE_NAME=${WORDPRESS_DB_NAME}
-        - WORDPRESS_DATABASE_USER=${WORDPRESS_DB_USER}
-        - WORDPRESS_DATABASE_PASSWORD=${WORDPRESS_DB_PASSWORD}
+        - WORDPRESS_DATABASE_NAME=${WORDPRESS_DATABASE_NAME}
+        - WORDPRESS_DATABASE_USER=${WORDPRESS_DATABASE_USER}
+        - WORDPRESS_DATABASE_PASSWORD=${WORDPRESS_DATABASE_PASSWORD}
         - WORDPRESS_DATABASE_PORT_NUMBER=${WORDPRESS_DATABASE_PORT_NUMBER}
+        - WORDPRESS_BLOG_NAME=${WORDPRESS_BLOG_NAME}
+        - WORDPRESS_USERNAME=${WORDPRESS_USERNAME}
+        - WORDPRESS_PASSWORD=${WORDPRESS_PASSWORD}
+        - WORDPRESS_EMAIL=${WORDPRESS_EMAIL}
         - ALLOW_EMPTY_PASSWORD=yes
+        # Cada variables tiene que estar bien identificada, el apartado 1 es el nombre de como tiene que llamarse en bitnami
+        # El apartado después es el que tenemos que identificar con $ y el nombre de nuestra variables en el .env
         volumes: 
-        - wordpress_data:/var/www/html
+        - wordpress_data:/bitnami/wordpress
         depends_on:
         - mysql
         restart: always
+        networks:
+        - frontend
+        - backend
 
     mysql:
         image: mysql:8.0
         ports:
-        - "3306:3306"
+        - 3306:3306
         environment:
+        #Cogemos las variables que hemos declarado en Wordpress, así podemos tener menos variables y las reciclamos.
         - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-        - MYSQL_DATABASE=${WORDPRESS_DB_NAME}
-        - MYSQL_USER=${WORDPRESS_DB_USER}
-        - MYSQL_PASSWORD=${WORDPRESS_DB_PASSWORD}
+        - MYSQL_DATABASE=${WORDPRESS_DATABASE_NAME}
+        - MYSQL_USER=${WORDPRESS_DATABASE_USER}
+        - MYSQL_PASSWORD=${WORDPRESS_DATABASE_PASSWORD}
         volumes:
         - mysql_data:/var/lib/mysql
         restart: always
+        networks:
+        - backend
 
     phpmyadmin:
         image: phpmyadmin
         ports:
-        - 8081:80
+        - 8080:80
         environment: 
-        - PMA_ARBITRARY=1
+        #Con pma_host indicamos el servicio con el que queremos que se use.
+        - PMA_HOST=mysql
         restart: always
+        networks:
+        - frontend
+        - backend
 
     https-portal:
         image: steveltn/https-portal:1
@@ -191,18 +208,21 @@ En este ejemplo tendremos que generar la estructura de Docker para poder descarg
         - 443:443
         restart: always
         environment:
-        DOMAINS: 'dominio-iawjoaquin.ddns.net -> http://wordpress:8080'
+        DOMAINS: '${DOMINIO} -> http://wordpress:8080'
         STAGE: 'production' # Don't use production until staging works
         # FORCE_RENEW: 'true'
+        networks:
+        - frontend
+
 
     volumes: 
     mysql_data:
     wordpress_data:
 
-
-
-    ```
-
+    networks:
+    frontend:
+    backend:
+```
 
 # Apartados mas importantes.
 
